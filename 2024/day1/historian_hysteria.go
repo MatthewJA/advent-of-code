@@ -10,7 +10,7 @@ import (
 )
 
 const separator = "   "
-const dataPath = "data/day1.txt"
+const dataPath = "../data/day1.txt"
 
 // readLists reads lists of historically significant location IDs from a file.
 func readLists(path string) ([]int, []int, error) {
