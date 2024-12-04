@@ -52,7 +52,7 @@ func abs(i int) int {
 	return i
 }
 
-// getDistance calculates the distance between two lists of ints.
+// getDistance calculates the distance between two lists of ints (for part 1).
 func getDistance(ls, rs []int) (int, error) {
 	if len(ls) != len(rs) {
 		return -1, fmt.Errorf("lists should be same length; got %d and %d", len(ls), len(rs))
@@ -72,16 +72,34 @@ func getDistance(ls, rs []int) (int, error) {
 	return d, nil
 }
 
+// getSimilarity calculates the similarity of two lists of ints (for part 2).
+func getSimilarity(ls, rs []int) int {
+	counts := make(map[int]int)
+	for _, r := range rs {
+		counts[r] += 1
+	}
+
+	sim := 0
+	for _, l := range ls {
+		sim += l * counts[l]
+	}
+
+	return sim
+}
+
 func main() {
 	ls, rs, err := readLists(dataPath)
 	if err != nil {
 		log.Fatalf("reading lists: %v", err)
 	}
 
-	d, err := getDistance(ls, rs)
+	dist, err := getDistance(ls, rs)
 	if err != nil {
 		log.Fatalf("getting distance: %v", err)
 	}
 
-	println(d)
+	sim := getSimilarity(ls, rs)
+
+	fmt.Printf("1: %d\n", dist)
+	fmt.Printf("2: %d\n", sim)
 }
