@@ -14,6 +14,7 @@ const dataPath = "../data/day2.txt"
 type level = int
 type report = []level
 
+// readReports reads reports from a file.
 func readReports(path string) ([]report, error) {
 	text, err := os.ReadFile(path)
 	if err != nil {
@@ -69,10 +70,28 @@ func isSafe(report report) bool {
 	return true
 }
 
-func countSafeReports(reports []report) int {
+// isSafeDampened determines if a report is safe when applying the Problem Dampener.
+func isSafeDampened(r report) bool {
+	for i := range r {
+		// Remove the ith element and check for safety.
+		// This could be made more efficient by avoiding re-slicing.
+		dampened := slices.Concat(r[:i], r[i+1:])
+		if isSafe(dampened) {
+			return true
+		}
+	}
+	return false
+}
+
+// countSafeReports counts how many reports are safe.
+// If damp is set, use the engineers' Problem Dampener.
+func countSafeReports(reports []report, damp bool) int {
 	n := 0
 	for _, report := range reports {
 		if isSafe(report) {
+			n += 1
+		} else if damp && isSafeDampened(report) {
+			// Only run the more expensive code path if we need to.
 			n += 1
 		}
 	}
@@ -85,6 +104,8 @@ func main() {
 		log.Fatalf("reading reports: %v", err)
 	}
 
-	c := countSafeReports(reports)
+	c := countSafeReports(reports, false)
 	fmt.Printf("1: %d\n", c)
+	c = countSafeReports(reports, true)
+	fmt.Printf("2: %d\n", c)
 }
