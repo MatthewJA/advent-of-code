@@ -144,28 +144,6 @@ func cleanLines(data string) []string {
 	return lines
 }
 
-// // countForwardDiagonal counts word occurrences that are vertical with a negative slope.
-// func countForwardDiagonal(lines []string, w Word) int {
-// 	n := 0
-// 	rw := reversed(w.Word)
-
-// 	for y, line := range lines {
-// 		for x, l := range line {
-// 			if l != w.Start && l != w.End {
-// 				continue
-// 			}
-// 			if y+w.Len > len(lines) || x+w.Len > len(line) {
-// 				continue
-// 			}
-// 			maybe := getVerticalWord(lines, x, y, w.Len, 1)
-// 			if maybe == w.Word || maybe == rw {
-// 				n += 1
-// 			}
-// 		}
-// 	}
-// 	return n
-// }
-
 // countX counts word occurrences that appear in an X shape.
 func countX(data string, w Word) int {
 	lines := cleanLines(data)
