@@ -69,19 +69,73 @@ func isValid(r map[stringPair]bool, o []string) (bool, error) {
 	return true, nil
 }
 
-// filterValid filters out invalid page orderings with respect to an ordering graph.
-func filterValid(r map[stringPair]bool, os [][]string) ([][]string, error) {
+// filterValid filters out invalid page orderings with respect to a set of rules.
+func filterValid(r map[stringPair]bool, os [][]string, invert bool) ([][]string, error) {
 	valid := make([][]string, 0)
 	for _, o := range os {
 		v, err := isValid(r, o)
 		if err != nil {
 			return nil, err
 		}
-		if v {
+		if v != invert {
 			valid = append(valid, o)
 		}
 	}
 	return valid, nil
+}
+
+// sortOrdering sorts an ordering by a set of rules.
+func sortOrdering(r map[stringPair]bool, o []string) ([]string, error) {
+	merge := func(a, b []string) []string {
+		c := make([]string, 0, len(a)+len(b))
+		for len(a) > 0 && len(b) > 0 {
+			cmpAB := r[stringPair{a[0], b[0]}]
+			cmpBA := r[stringPair{b[0], a[0]}]
+			if cmpAB {
+				// a[0] comes before b[0].
+				c = append(c, a[0])
+				a = a[1:]
+				continue
+			}
+			if cmpBA {
+				// b[0] comes before a[0].
+				c = append(c, b[0])
+				b = b[1:]
+				continue
+			}
+			panic("Unreachable")
+		}
+		if len(a) > 0 {
+			return append(c, a...)
+		}
+		return append(c, b...)
+	}
+
+	groups := make([][]string, 0, len(o))
+	for _, v := range o {
+		groups = append(groups, []string{v})
+	}
+
+	for len(groups) > 1 {
+		newGroups := make([][]string, 0, len(groups))
+		for i := range groups {
+			if i%2 == 1 {
+				// Skip odds.
+				continue
+			}
+			if i == len(groups)-1 {
+				// Special handling for odd group length.
+				newGroups = append(newGroups, groups[i])
+				continue
+			}
+			a := groups[i]
+			b := groups[i+1]
+			c := merge(a, b)
+			newGroups = append(newGroups, c)
+		}
+		groups = newGroups
+	}
+	return groups[0], nil
 }
 
 func main() {
@@ -98,9 +152,10 @@ func main() {
 	}
 
 	// Find all the valid orderings (so we can add up their middles).
-	validOrderings, err := filterValid(rules, pageOrderings)
+	validOrderings, err := filterValid(rules, pageOrderings, false)
 	if err != nil {
 		fmt.Printf("error filtering: %v\n", err)
+		return
 	}
 
 	// Add up the middle pages.
@@ -115,4 +170,29 @@ func main() {
 		total += v
 	}
 	fmt.Printf("1: %d\n", total)
+
+	// For part two, we need the invalid ones instead.
+	// It's easier to redo the calculation than store the results.
+	invalidOrderings, err := filterValid(rules, pageOrderings, true)
+	if err != nil {
+		fmt.Printf("error filtering: %v\n", err)
+		return
+	}
+
+	total = 0
+	for _, ordering := range invalidOrderings {
+		ordering, err = sortOrdering(rules, ordering)
+		if err != nil {
+			fmt.Printf("error sorting: %v\n", err)
+			return
+		}
+		s := ordering[len(ordering)/2]
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			fmt.Printf("invalid int: %s", s)
+			return
+		}
+		total += v
+	}
+	fmt.Printf("2: %d\n", total)
 }
