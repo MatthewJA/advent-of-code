@@ -8,10 +8,24 @@ import (
 )
 
 const dataPath = "../data/day4.txt"
-const word = "XMAS"
-const wlen = 4
-const start = 'X'
-const end = 'S'
+
+// Word stores metadata for a word.
+type Word struct {
+	Word  string
+	Len   int
+	Start rune
+	End   rune
+}
+
+// makeWord converts a string into a Word.
+func makeWord(s string) Word {
+	return Word{
+		s,
+		len(s),
+		rune(s[0]),
+		rune(s[len(s)-1]),
+	}
+}
 
 // reversed reverses a string.
 func reversed(s string) string {
@@ -24,19 +38,19 @@ func reversed(s string) string {
 }
 
 // countHorizontal counts horizontal word occurrences.
-func countHorizontal(lines []string) int {
+func countHorizontal(lines []string, w Word) int {
 	n := 0
-	rw := reversed(word)
+	rw := reversed(w.Word)
 	for _, line := range lines {
 		for x, l := range line {
-			if l != start && l != end {
+			if l != w.Start && l != w.End {
 				continue
 			}
-			if x+wlen > len(line) {
+			if x+w.Len > len(line) {
 				break
 			}
-			maybe := line[x : x+wlen]
-			if maybe == word || maybe == rw {
+			maybe := line[x : x+w.Len]
+			if maybe == w.Word || maybe == rw {
 				n += 1
 			}
 		}
@@ -54,20 +68,20 @@ func getVerticalWord(lines []string, x, y, wlen, offset int) string {
 }
 
 // countVertical counts vertical word occurrences.
-func countVertical(lines []string) int {
+func countVertical(lines []string, w Word) int {
 	n := 0
-	rw := reversed(word)
+	rw := reversed(w.Word)
 
 	for y, line := range lines {
 		for x, l := range line {
-			if l != start && l != end {
+			if l != w.Start && l != w.End {
 				continue
 			}
-			if y+wlen > len(lines) {
+			if y+w.Len > len(lines) {
 				break
 			}
-			maybe := getVerticalWord(lines, x, y, wlen, 0)
-			if maybe == word || maybe == rw {
+			maybe := getVerticalWord(lines, x, y, w.Len, 0)
+			if maybe == w.Word || maybe == rw {
 				n += 1
 			}
 		}
@@ -76,20 +90,20 @@ func countVertical(lines []string) int {
 }
 
 // countForwardDiagonal counts word occurrences that are vertical with a negative slope.
-func countForwardDiagonal(lines []string) int {
+func countForwardDiagonal(lines []string, w Word) int {
 	n := 0
-	rw := reversed(word)
+	rw := reversed(w.Word)
 
 	for y, line := range lines {
 		for x, l := range line {
-			if l != start && l != end {
+			if l != w.Start && l != w.End {
 				continue
 			}
-			if y+wlen > len(lines) || x+wlen > len(line) {
+			if y+w.Len > len(lines) || x+w.Len > len(line) {
 				continue
 			}
-			maybe := getVerticalWord(lines, x, y, wlen, 1)
-			if maybe == word || maybe == rw {
+			maybe := getVerticalWord(lines, x, y, w.Len, 1)
+			if maybe == w.Word || maybe == rw {
 				n += 1
 			}
 		}
@@ -98,20 +112,20 @@ func countForwardDiagonal(lines []string) int {
 }
 
 // countBackwardDiagonal counts word occurrences that are vertical with a positive slope.
-func countBackwardDiagonal(lines []string) int {
+func countBackwardDiagonal(lines []string, w Word) int {
 	n := 0
-	rw := reversed(word)
+	rw := reversed(w.Word)
 
 	for y, line := range lines {
 		for x, l := range line {
-			if l != start && l != end {
+			if l != w.Start && l != w.End {
 				continue
 			}
-			if y+wlen > len(lines) || x-wlen < -1 {
+			if y+w.Len > len(lines) || x-w.Len < -1 {
 				continue
 			}
-			maybe := getVerticalWord(lines, x, y, wlen, -1)
-			if maybe == word || maybe == rw {
+			maybe := getVerticalWord(lines, x, y, w.Len, -1)
+			if maybe == w.Word || maybe == rw {
 				n += 1
 			}
 		}
@@ -119,19 +133,74 @@ func countBackwardDiagonal(lines []string) int {
 	return n
 }
 
-// findWords counts how many words occur in the data.
-func findWords(data string) int {
+// cleanLines splits lines and removes empty ones.
+func cleanLines(data string) []string {
 	lines := strings.Split(data, "\n")
 
 	// Strip empty lines.
 	for len(lines[len(lines)-1]) == 0 {
 		lines = lines[:len(lines)-1]
 	}
+	return lines
+}
 
-	return (countHorizontal(lines) +
-		countVertical(lines) +
-		countForwardDiagonal(lines) +
-		countBackwardDiagonal(lines))
+// // countForwardDiagonal counts word occurrences that are vertical with a negative slope.
+// func countForwardDiagonal(lines []string, w Word) int {
+// 	n := 0
+// 	rw := reversed(w.Word)
+
+// 	for y, line := range lines {
+// 		for x, l := range line {
+// 			if l != w.Start && l != w.End {
+// 				continue
+// 			}
+// 			if y+w.Len > len(lines) || x+w.Len > len(line) {
+// 				continue
+// 			}
+// 			maybe := getVerticalWord(lines, x, y, w.Len, 1)
+// 			if maybe == w.Word || maybe == rw {
+// 				n += 1
+// 			}
+// 		}
+// 	}
+// 	return n
+// }
+
+// countX counts word occurrences that appear in an X shape.
+func countX(data string, w Word) int {
+	lines := cleanLines(data)
+	n := 0
+	rw := reversed(w.Word)
+
+	for y, line := range lines {
+		for x, l := range line {
+			if l != w.Start && l != w.End {
+				continue
+			}
+			if y+w.Len > len(lines) || x+w.Len > len(line) {
+				continue
+			}
+			maybe := getVerticalWord(lines, x, y, w.Len, 1)
+			if maybe != w.Word && maybe != rw {
+				continue
+			}
+			maybe = getVerticalWord(lines, x+w.Len-1, y, w.Len, -1)
+			if maybe != w.Word && maybe != rw {
+				continue
+			}
+			n += 1
+		}
+	}
+	return n
+}
+
+// countWords counts how many words occur in the data.
+func countWords(data string, w Word) int {
+	lines := cleanLines(data)
+	return (countHorizontal(lines, w) +
+		countVertical(lines, w) +
+		countForwardDiagonal(lines, w) +
+		countBackwardDiagonal(lines, w))
 }
 
 func main() {
@@ -140,6 +209,9 @@ func main() {
 		log.Fatalf("reading data: %v", err)
 	}
 
-	n := findWords(string(data))
+	n := countWords(string(data), makeWord("XMAS"))
 	fmt.Printf("1: %d\n", n)
+
+	n = countX(string(data), makeWord("MAS"))
+	fmt.Printf("2: %d\n", n)
 }
