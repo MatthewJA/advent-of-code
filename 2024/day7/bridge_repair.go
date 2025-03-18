@@ -60,24 +60,38 @@ func parse(data []byte) ([]*equation, error) {
 	return eqs, nil
 }
 
+// concat concatenates numbers.
+func concat(a, b int) int {
+	c, err := strconv.Atoi(strconv.Itoa(a) + strconv.Itoa(b))
+	if err != nil {
+		panic("unreachable")
+	}
+	return c
+}
+
 // findAllValues finds all combinations of values.
-func findAllValues(xs []int) []int {
+// allowConcat indicates whether the elephants have revealed their concatenation operator.
+func findAllValues(xs []int, allowConcat bool) []int {
 	if len(xs) <= 1 {
 		return xs
 	}
 	x, xs := xs[len(xs)-1], xs[:len(xs)-1]
-	values := findAllValues(xs)
-	out := make([]int, 0, len(values)*2)
+	values := findAllValues(xs, allowConcat)
+	out := make([]int, 0, len(values)*3)
 	for _, v := range values {
 		out = append(out, v+x)
 		out = append(out, v*x)
+		if allowConcat {
+			out = append(out, concat(v, x))
+		}
 	}
 	return out
 }
 
 // validEquation checks if an equation is possible when operators are replaced.
-func validEquation(eq *equation) bool {
-	all := findAllValues(eq.inputs)
+// allowConcat indicates whether the elephants have revealed their concatenation operator.
+func validEquation(eq *equation, allowConcat bool) bool {
+	all := findAllValues(eq.inputs, allowConcat)
 	return slices.Contains(all, eq.value)
 }
 
@@ -96,9 +110,17 @@ func main() {
 
 	total := 0
 	for _, eq := range eqs {
-		if validEquation(eq) {
+		if validEquation(eq, false) {
 			total += eq.value
 		}
 	}
 	fmt.Printf("1: %d\n", total)
+
+	total = 0
+	for _, eq := range eqs {
+		if validEquation(eq, true) {
+			total += eq.value
+		}
+	}
+	fmt.Printf("2: %d\n", total)
 }
